@@ -1,4 +1,5 @@
 var userFormEl = document.querySelector("#user-form");
+var languageButtonsEl = document.querySelector("#language-buttons");
 var nameInputEl = document.querySelector("#username");
 var repoContainerEl = document.querySelector("#repos-container");
 var repoSearchTerm = document.querySelector("#repo-search-term");
@@ -6,6 +7,7 @@ var repoSearchTerm = document.querySelector("#repo-search-term");
 var formSubmitHandler = function(event) {
   event.preventDefault();
   var username = nameInputEl.value.trim();
+
   if (username) {
     getUserRepos(username);
     repoContainerEl.textContent = "";
@@ -15,9 +17,16 @@ var formSubmitHandler = function(event) {
   }
 };
 
+var buttonClickHandler = function(event) {
+  var language = event.target.getAttribute("data-language");
+
+  if (language) {
+    getFeaturedRepos(language);
+    repoContainerEl.textContent = "";
+  }
+};
 var getUserRepos = function(user) {
   var apiUrl = "https://api.github.com/users/" + user + "/repos";
-
   fetch(apiUrl)
     .then(function(response) {
       if (response.ok) {
@@ -35,6 +44,18 @@ var getUserRepos = function(user) {
     });
 };
 
+var getFeaturedRepos = function(language) {
+  var apiUrl = "https://api.github.com/search/repositories?q=" + language + "+is:featured&sort=help-wanted-issues";
+  fetch(apiUrl).then(function(response) {
+    if (response.ok) {
+      response.json().then(function(data) {
+        displayRepos(data.items, language);
+      });
+    } else {
+      alert("Error: " + response.statusText);
+    }
+  });
+};
 var displayRepos = function(repos, searchTerm) {
   if (repos.length === 0) {
     repoContainerEl.textContent = "No repositories found.";
@@ -48,7 +69,9 @@ var displayRepos = function(repos, searchTerm) {
     repoEl.setAttribute("href", "./single-repo.html?repo=" + repoName);
     var titleEl = document.createElement("span");
     titleEl.textContent = repoName;
+
     repoEl.appendChild(titleEl);
+
     var statusEl = document.createElement("span");
     statusEl.classList = "flex-row align-center";
     if (repos[i].open_issues_count > 0) {
@@ -63,3 +86,4 @@ var displayRepos = function(repos, searchTerm) {
 };
 
 userFormEl.addEventListener("submit", formSubmitHandler);
+languageButtonsEl.addEventListener("click", buttonClickHandler);
